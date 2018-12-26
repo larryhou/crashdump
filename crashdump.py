@@ -42,8 +42,8 @@ def main():
     for crash_file in options.crash_file:
         cursor, stack = '', []
         with open(crash_file, 'r+') as fp:
-            output = open(p.dirname(fp.name) + '/dump_' + p.basename(fp.name), 'w+')
-            pattern = re.compile(r'\s+pc\s+([a-f0-9]{8})\s+', re.IGNORECASE)
+            output = open(re.sub(r'\.[^.]+$', '.cpp', fp.name), 'w+')
+            pattern = re.compile(r'\s+(pc|lr)\s+([a-f0-9]{8})\s+', re.IGNORECASE)
             while True:
                 line = fp.readline()
                 if not line:
@@ -57,7 +57,7 @@ def main():
                         cursor, stack = '', []
                     output.write(line)
                 else:
-                    address = pattern.search(line).group(1)
+                    address = pattern.search(line).group(2)
                     libname = p.basename(line[libpos:].split(' ', 1)[0])
                     if not cursor:
                         cursor, stack = libname, []
