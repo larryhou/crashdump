@@ -68,7 +68,7 @@ def main():
                         cursor, stack = libname, []
                     stack.append((address, line))
             output.seek(0)
-            print(output.read())
+            print(output.read(), '\n')
             output.close()
 
 
