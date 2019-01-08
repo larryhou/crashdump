@@ -27,8 +27,9 @@ def symbolicate(libname, stack, fp):
     buffer = io.StringIO(content)
     index = 0
     for line in buffer.readlines():
-        fp.write(libname + ' ' + line[:-1] + ' /* ' + stack[index][1][:-1] + ' */\n')
-        index += 1
+        if index < len(stack):
+            fp.write(libname + ' ' + line[:-1] + ' /* ' + stack[index][1][:-1] + ' */\n')
+            index += 1
 
 def main():
     import argparse, sys
@@ -40,6 +41,7 @@ def main():
         if not file_name.endswith('.so'): continue
         libmap[file_name] = p.abspath(p.join(options.symbol_path, file_name))
     for crash_file in options.crash_file:
+        print('>>',os.path.abspath(crash_file))
         cursor, stack = '', []
         with open(crash_file, 'r+') as fp:
             output = open(re.sub(r'\.[^.]+$', '.cpp', fp.name), 'w+')
@@ -50,15 +52,15 @@ def main():
                     if stack: symbolicate(cursor, stack, output)
                     break
                 match = pattern.search(line)
-                libpos = line.find('/lib/arm/')
-                if not match or libpos == -1:
+                libpos = re.search(r'\/(lib\w+\.so)', line)
+                if not match or not libpos:
                     if stack:
                         symbolicate(cursor, stack, output)
                         cursor, stack = '', []
                     output.write(line)
                 else:
                     address = pattern.search(line).group(2)
-                    libname = p.basename(line[libpos:].split(' ', 1)[0])
+                    libname = libpos.group(1)
                     if not cursor:
                         cursor, stack = libname, []
                     elif cursor != libname:
